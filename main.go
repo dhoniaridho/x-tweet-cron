@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 
 	"github.com/dghubble/oauth1"
@@ -63,7 +65,23 @@ func main() {
 	println("Cron execution schedule:", viper.GetString("TWITTER_CRON_SCHEDULE"))
 
 	c.AddFunc(viper.GetString("TWITTER_CRON_SCHEDULE"), func() {
-		postTweet(client, viper.GetString("TWITTER_TWEET_TEXT"))
+		txt := viper.GetString("TWITTER_TWEET_TEXT")
+		tweetBase64 := viper.GetString("TWITTER_TWEET_BASE64")
+		if tweetBase64 != "" {
+			tweetBytes, err := base64.StdEncoding.DecodeString(tweetBase64)
+			if err != nil {
+				log.Fatal("Error decoding base64 string: ", err)
+			}
+			var tweet []string
+			err = json.Unmarshal(tweetBytes, &tweet)
+			if err != nil {
+				log.Fatal("Error unmarshalling json: ", err)
+				txt = viper.GetString("TWITTER_TWEET_TEXT")
+			}
+			txt = tweet[rand.Intn(len(tweet))]
+		}
+		println(txt)
+		postTweet(client, txt)
 	})
 
 	// Start scheduler
