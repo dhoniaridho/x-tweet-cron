@@ -55,7 +55,13 @@ func main() {
 	client := createTwitterClient()
 	c := cron.New()
 
-	// Schedule: Every hour
+	schedule := viper.GetString("TWITTER_CRON_SCHEDULE")
+	if schedule == "" {
+		log.Fatal("TWITTER_CRON_SCHEDULE is not set in environment variables")
+	}
+
+	println("Cron execution schedule:", viper.GetString("TWITTER_CRON_SCHEDULE"))
+
 	c.AddFunc(viper.GetString("TWITTER_CRON_SCHEDULE"), func() {
 		postTweet(client, viper.GetString("TWITTER_TWEET_TEXT"))
 	})
